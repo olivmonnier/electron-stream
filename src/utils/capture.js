@@ -32,7 +32,11 @@ const getStream = (sourceId = null, quality = "low") => {
   if (sourceId !== null) videoOptions['chromeMediaSourceId'] = sourceId;
 
   return navigator.mediaDevices.getUserMedia({
-    audio: false,
+    audio: {
+      mandatory: {
+        chromeMediaSource: 'desktop'
+      }
+    },
     video: {
       mandatory: videoOptions
     }

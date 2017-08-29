@@ -1,6 +1,17 @@
 html
   head
     title view
+    style.
+      body {
+        background: white;
+        display: -webkit-flex;
+        -webkit-justify-content: center;
+        -webkit-align-items: center;
+        -webkit-flex-direction: column;
+      }
+      video {
+        background: rgba(0, 0, 0, 0.25);
+      }
   body
     video#remoteVideo(autoplay)
     script.
@@ -21,7 +32,7 @@ html
         uuid = uuid();
         remoteVideo = document.getElementById('remoteVideo');
 
-        serverConnection = new WebSocket('wss://localhost:8443');
+        serverConnection = new WebSocket('wss://' + window.location.host);
         serverConnection.onmessage = gotMessageFromServer;
       }
 
