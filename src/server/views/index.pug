@@ -16,9 +16,13 @@ html
     video#remoteVideo(autoplay)
     script.
       var serverConnection;
+      var remoted = false;
       var peerConnection;
       var uuid;
-
+      const offerOptions = {
+        offerToReceiveAudio: 1,
+        offerToReceiveVideo: 1
+      };
       var peerConnectionConfig = {
         'iceServers': [
           {'urls': 'stun:stun.services.mozilla.com'},
@@ -27,6 +31,11 @@ html
       };
 
       pageReady();
+
+      window.onbeforeunload = function() {
+        if (peerConnection) peerConnection.close();
+        if (serverConnection) serverConnection.close();
+      }
 
       function pageReady() {
         uuid = uuid();
@@ -40,7 +49,6 @@ html
         peerConnection = new RTCPeerConnection(peerConnectionConfig);
         peerConnection.onicecandidate = gotIceCandidate;
         peerConnection.onaddstream = gotRemoteStream;
-        peerConnection.createOffer().then(createdDescription).catch(errorHandler);
       }
 
       function gotMessageFromServer(message) {
@@ -52,14 +60,17 @@ html
         // Ignore messages from ourself
         if(signal.uuid == uuid) return;
 
-        if(signal.sdp) {
-          peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp)).then(function() {
+        if(signal.sdp && !remoted) {
+          remoted = true;
+          peerConnection.setRemoteDescription(signal.sdp).then(function() {
             // Only create answers in response to offers
             if(signal.sdp.type == 'offer') {
               console.log('offer')
-              peerConnection.createAnswer().then(createdDescription).catch(errorHandler);
+              peerConnection.createAnswer(offerOptions).then(createdDescription).catch(errorHandler);
             }
-          }).catch(errorHandler);
+          }).catch((err) => {
+            errorHandler(err)
+          })//.catch(errorHandler);
         } else if(signal.ice) {
           peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice)).catch(errorHandler);
         }

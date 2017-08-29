@@ -87,13 +87,7 @@ function gotMessageFromServer(event, message) {
   if (signal.uuid == uuid) return;  
 
   if (signal.sdp) {
-    peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp)).then(function () {
-      // Only create answers in response to offers
-      if (signal.sdp.type == 'offer') {
-        console.log('offer')
-        peerConnection.createAnswer().then(createdDescription).catch(errorHandler);
-      }
-    }).catch(errorHandler);
+    peerConnection.setRemoteDescription(signal.sdp).catch(errorHandler);
   } else if (signal.ice) {
     peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice)).catch(errorHandler);
   }
@@ -109,7 +103,7 @@ function start() {
   peerConnection = new RTCPeerConnection(peerConnectionConfig);
   peerConnection.onicecandidate = gotIceCandidate;
   peerConnection.addStream(localStream);  
-  peerConnection.createOffer(onCreateOfferSuccess, errorHandler, offerOptions);
+  peerConnection.createOffer(offerOptions).then(onCreateOfferSuccess).catch(errorHandler)
 }
 
 function gotIceCandidate(event) {

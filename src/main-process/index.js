@@ -2,15 +2,12 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const https = require('https');
-const http = require('http');
 const privateKey = fs.readFileSync(path.join(__dirname, '../server/sslcert/key.key'), 'utf8');
 const certificate = fs.readFileSync(path.join(__dirname, '../server/sslcert/cert.cert'), 'utf8');
 const app = express();
 const credentials = { key: privateKey, cert: certificate };
-const httpServer = http.createServer(app);
 const httpsServer = https.createServer(credentials, app);
 const HTTPS_PORT = 8443;
-const HTTP_PORT = 8444;
 const WebSocket = require('ws');
 const WebSocketServer = WebSocket.Server;
 const { BrowserWindow, ipcMain } = require('electron');
@@ -24,7 +21,6 @@ app.get('/', function (req, res) {
 });
 
 httpsServer.listen(HTTPS_PORT);
-//httpServer.listen(HTTP_PORT);
 
 const wss = new WebSocketServer({ server: httpsServer });
 
@@ -51,6 +47,7 @@ wss.on('connection', function (ws) {
  
 wss.broadcast = function (data) {
   this.clients.forEach(function (client) {
+    console.log(client)
     if (client.readyState === WebSocket.OPEN) {
       client.send(data);
     }
