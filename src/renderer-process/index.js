@@ -4,7 +4,7 @@ let peerConnection;
 let uuid;
 
 const { ipcRenderer } = require('electron');
-const getDesktop = require('../utils/getDesktop');
+const { getStream, getSources, videoQualities } = require('../utils/capture');
 const video = document.querySelector('video');
 const peerConnectionConfig = {
   'iceServers': [
@@ -19,14 +19,67 @@ const offerOptions = {
 
 pageReady();
 
+ipcRenderer.on('connection', start);
+ipcRenderer.on('message', gotMessageFromServer);
+
+document.querySelector('#sources').addEventListener('change', onChangeSelect);
+document.querySelector('#videoQuality').addEventListener('change', onChangeSelect);
+
 function pageReady() {
   uuid = uid();
 
-  getDesktop().then(gotStream);
+  showSources();
+  showVideoQualities();
+  getStream().then(gotStream);
 }
 
-ipcRenderer.on('connection', start);
-ipcRenderer.on('message', gotMessageFromServer);
+function showSources() {
+  getSources().then(sources => {
+    for (let source of sources) {
+      addSource(source);
+    }
+  });
+}
+
+function showVideoQualities() {
+  for (let quality in videoQualities) {
+    addVideoQuality(quality);
+  }
+}
+
+function addSource(source) {
+  const { id, name } = source;
+  const select = document.querySelector('#sources');
+  const option = document.createElement('option');
+
+  option.value = id.replace(':', '');
+  option.textContent = name;
+
+  select.appendChild(option);
+}
+
+function addVideoQuality(quality) {
+  const select = document.querySelector('#videoQuality');
+  const option = document.createElement('option');
+
+  option.value = quality;
+  option.textContent = quality;
+
+  select.appendChild(option);
+}
+
+function onChangeSelect() {
+  let source = document.querySelector('#sources').value;
+  const quality = document.querySelector('#videoQuality').value;
+
+  source = source.replace(/window|screen/g, (match) => match + ':');
+
+  if (localStream) localStream.getTracks()[0].stop();
+
+  localStream = null;
+
+  getStream(source, quality).then(gotStream);
+}
 
 function gotMessageFromServer(event, message) {
   const signal = JSON.parse(message);
