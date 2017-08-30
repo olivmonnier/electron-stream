@@ -26,6 +26,7 @@ const getStream = (sourceId = null, quality = "low") => {
     maxWidth: videoQuality[0],
     minHeight: videoQuality[1],
     maxHeight: videoQuality[1],
+    minFrameRate: 15,
     maxFrameRate: 25
   }
 

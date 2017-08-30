@@ -28,6 +28,9 @@ wss.on('connection', function (ws) {
   const currentWindow = BrowserWindow.fromId(getMainWindowId());
   currentWindow.webContents.send('connection', null);
 
+  ws.isAlive = true;
+  ws.on('pong', heartbeat);
+
   ws.on('message', function (message) {
     const currentWindow = BrowserWindow.fromId(getMainWindowId());
     // Broadcast any received message to all clients
@@ -53,3 +56,16 @@ wss.broadcast = function (data) {
     }
   });
 }; 
+
+const interval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+    if (ws.isAlive === false) return ws.terminate();
+
+    ws.isAlive = false;
+    ws.ping('', false, true);
+  });
+}, 30000);
+
+function heartbeat() {
+  this.isAlive = true;
+}

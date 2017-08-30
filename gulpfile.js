@@ -1,5 +1,8 @@
 const gulp = require('gulp');
-const processManager = require('electron-connect').server.create();
+const processManager = require('electron-connect').server.create({
+  useGlobalElectron: true,
+  logLevel: 1
+});
 
 gulp.task('default', () => {
   processManager.start()

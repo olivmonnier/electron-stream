@@ -5,12 +5,11 @@ let uuid;
 
 const { ipcRenderer } = require('electron');
 const { getStream, getSources, videoQualities } = require('../utils/capture');
+const setMediaBitrates = require('../utils/limitBandwidth');
+const iceServers = require('../utils/iceServersAdress');
 const video = document.querySelector('video');
 const peerConnectionConfig = {
-  'iceServers': [
-    { 'urls': 'stun:stun.services.mozilla.com' },
-    { 'urls': 'stun:stun.l.google.com:19302' }
-  ]
+  'iceServers': iceServers
 };
 const offerOptions = {
   offerToReceiveAudio: 1,
@@ -129,6 +128,7 @@ function onCreateOfferSuccess(description) {
   console.log('got description');
 
   peerConnection.setLocalDescription(description).then(function () {
+    peerConnection.localDescription.sdp = setMediaBitrates(peerConnection.localDescription.sdp);
     ipcRenderer.send('localDescription', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }));
   }).catch(errorHandler);
 }
