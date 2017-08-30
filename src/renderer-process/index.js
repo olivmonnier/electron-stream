@@ -9,7 +9,7 @@ const video = document.querySelector('video');
 const peerConnectionConfig = {
   'iceServers': [
     { 'urls': 'stun:stun.services.mozilla.com' },
-    { 'urls': 'stun:stun.l.google.com:19302' },
+    { 'urls': 'stun:stun.l.google.com:19302' }
   ]
 };
 const offerOptions = {
@@ -48,11 +48,14 @@ function showVideoQualities() {
 }
 
 function addSource(source) {
+  let formatId;
   const { id, name } = source;
   const select = document.querySelector('#sources');
   const option = document.createElement('option');
 
-  option.value = id.replace(':', '');
+  formatId = formatScreenId(id, name);
+
+  option.value = formatId.replace(':', '');
   option.textContent = name;
 
   select.appendChild(option);
@@ -74,11 +77,13 @@ function onChangeSelect() {
 
   source = source.replace(/window|screen/g, (match) => match + ':');
 
-  if (localStream) localStream.getTracks()[0].stop();
-
-  localStream = null;
-
-  getStream(source, quality).then(gotStream);
+  getStream(source, quality).then((stream) => {
+    if (peerConnection) {
+      peerConnection.removeStream(localStream);
+      peerConnection.addStream(stream);
+    }
+    gotStream(stream);
+  });
 }
 
 function gotMessageFromServer(event, message) {
@@ -94,6 +99,10 @@ function gotMessageFromServer(event, message) {
 }
 
 function gotStream(stream) {
+  if (localStream) {
+    localStream.getVideoTracks()[0].stop();
+    localStream = null;
+  }
   localStream = stream;
   video.src = URL.createObjectURL(stream); 
 }
@@ -103,7 +112,9 @@ function start() {
   peerConnection = new RTCPeerConnection(peerConnectionConfig);
   peerConnection.onicecandidate = gotIceCandidate;
   peerConnection.addStream(localStream);  
-  peerConnection.createOffer(offerOptions).then(onCreateOfferSuccess).catch(errorHandler)
+  peerConnection.onnegotiationneeded = function() {
+    peerConnection.createOffer(offerOptions).then(onCreateOfferSuccess).catch(errorHandler)
+  }
 }
 
 function gotIceCandidate(event) {
@@ -132,4 +143,14 @@ function uid() {
   }
 
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+function formatScreenId(id, name) {
+  if (name.indexOf('Screen ') > -1) {
+    nScreen = parseInt(name.replace('Screen ', ''), 10) - 1;
+
+    return 'screen:' + nScreen + ':0';
+  } else {
+    return id;
+  }
 }
