@@ -44,8 +44,19 @@ const getStream = (sourceId = null, quality = "low") => {
   })
 }
 
+const formatScreenId = (id, name) => {
+  if (name.indexOf('Screen ') > -1) {
+    nScreen = parseInt(name.replace('Screen ', ''), 10) - 1;
+
+    return 'screen:' + nScreen + ':0';
+  } else {
+    return id;
+  }
+}
+
 module.exports = {
   videoQualities,
   getSources,
-  getStream
+  getStream,
+  formatScreenId
 }
