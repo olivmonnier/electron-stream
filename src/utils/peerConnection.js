@@ -1,5 +1,17 @@
 const setMediaBitrates = require('./limitBandwidth');
 
+const offerOptions = {
+  offerToReceiveAudio: 1,
+  offerToReceiveVideo: 1
+};
+
+function createAnswer(pc, successSignal) {
+  pc.createAnswer(offerOptions)
+    .then((desc) => {
+      onCreateOfferSuccess(pc, desc, successSignal)
+    }).catch(errorHandler)
+}
+
 function createOffer(pc, successSignal, offerOptions) {
   pc.createOffer(offerOptions)
     .then((desc) => {
@@ -16,7 +28,7 @@ function onCreateOfferSuccess (pc, description, signal) {
   }).catch(errorHandler);
 }
 
-function onIceCandidate(event, cb) {
+function iceCandidate(event, cb) {
   console.log('ice')
   if (event.candidate) {
     console.log('candidate');
@@ -29,7 +41,8 @@ function errorHandler(error) {
 }
 
 module.exports = {
+  createAnswer,
   createOffer,
   onCreateOfferSuccess,
-  onIceCandidate
+  iceCandidate
 }

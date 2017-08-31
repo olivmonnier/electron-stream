@@ -8,19 +8,15 @@ const { showSources, showVideoQualities, changeSelect } = require('./ui');
 const { getStream } = require('../utils/capture');
 const iceServers = require('../utils/iceServersAdress');
 const generateUuid = require('../utils/uuid');
-const { createOffer, onIceCandidate } = require('../utils/peerConnection');
+const { createOffer, iceCandidate } = require('../utils/peerConnection');
 const peerConnectionConfig = {
   'iceServers': iceServers
-};
-const offerOptions = {
-  offerToReceiveAudio: 1,
-  offerToReceiveVideo: 1
 };
 
 pageReady();
 
 ipcRenderer.on('connection', start);
-ipcRenderer.on('message', gotMessageFromServer);
+ipcRenderer.on('message', onMessageFromServer);
 
 document.querySelector('#sources').addEventListener('change', onChangeSelect);
 document.querySelector('#videoQuality').addEventListener('change', onChangeSelect);
@@ -52,21 +48,26 @@ function start() {
   console.log('start');
   peerConnection = new RTCPeerConnection(peerConnectionConfig);
   peerConnection.addStream(localStream);  
-  peerConnection.onnegotiationneeded = function() {
-    createOffer(peerConnection, () => {
-      ipcRenderer.send('localDescription', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }))
-    }, offerOptions)
-  }
-  peerConnection.onicecandidate = (event) => {
-    onIceCandidate(event, () => {
-      ipcRenderer.send('iceCandidate', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
-    });
-  }
+  peerConnection.onnegotiationneeded = onNegotiationnNeeded;
+  peerConnection.onicecandidate = onIceCandidate;
 }
 
-function gotMessageFromServer(event, message) {
+function onNegotiationnNeeded() {
+  createOffer(peerConnection, () => {
+    ipcRenderer.send('localDescription', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }))
+  })
+}
+
+function onIceCandidate(event) {
+  iceCandidate(event, () => 
+    ipcRenderer.send('iceCandidate', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
+  )
+}
+
+function onMessageFromServer(event, message) {
   const signal = JSON.parse(message);
-  const state = peerConnection.signalingState;
+  const signalState = peerConnection.signalingState;
+  const iceState = peerConnection.iceConnectionState;
 
   if (signal.uuid == uuid) return;
 
@@ -74,7 +75,7 @@ function gotMessageFromServer(event, message) {
     if (signal.sdp.type == 'answer') {
       peerConnection.setRemoteDescription(signal.sdp).catch(errorHandler);
     }
-  } else if (signal.ice) {
+  } else if (signal.ice && iceState !== 'completed') {
     peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice)).catch(errorHandler);
   }
 }

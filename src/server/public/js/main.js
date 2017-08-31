@@ -9,11 +9,8 @@ let uuid;
 const generateUuid = require('../../../utils/uuid');
 const iceServers = require('../../../utils/iceServersAdress');
 const setMediaBitrates = require('../../../utils/limitBandwidth');
+const { createAnswer, createOffer, iceCandidate } = require('../../../utils/peerConnection');
 
-const offerOptions = {
-  offerToReceiveAudio: 1,
-  offerToReceiveVideo: 1
-};
 const peerConnectionConfig = {
   'iceServers': iceServers
 };
@@ -30,53 +27,45 @@ function pageReady() {
   remoteVideo = document.getElementById('remoteVideo');
 
   serverConnection = io.connect(window.location.protocol + "//" + window.location.host);
-  serverConnection.on('message', gotMessageFromServer);
+  serverConnection.on('message', onMessageFromServer);
 }
 
 function start() {
   peerConnection = new RTCPeerConnection(peerConnectionConfig);
-  peerConnection.onicecandidate = gotIceCandidate;
   peerConnection.onaddstream = gotRemoteStream;
+  peerConnection.onicecandidate = onIceCandidate;
 }
 
-function gotMessageFromServer(message) {
+function onIceCandidate(event) {
+  iceCandidate(event, () => 
+    serverConnection.emit('message', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
+  )
+}
+
+function onMessageFromServer(message) {
   console.log('message', message)
   if (!peerConnection) start();
 
   const signal = JSON.parse(message);
-  const state = peerConnection.signalingState;
+  const signalState = peerConnection.signalingState;
+  const iceState = peerConnection.iceConnectionState;
 
   // Ignore messages from ourself
   if (signal.uuid == uuid) return;
 
-  if (signal.sdp && state !== 'have-remote-offer') {
+  if (signal.sdp && signalState !== 'have-remote-offer') {
     peerConnection.setRemoteDescription(signal.sdp).then(function () {
       // Only create answers in response to offers
       if (signal.sdp.type == 'offer') {
         console.log('offer')
-        peerConnection.createAnswer(offerOptions).then(createdDescription).catch(errorHandler);
+        createAnswer(peerConnection, () => 
+          serverConnection.emit('message', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }))
+        )
       }
     }).catch(errorHandler);
-  } else if (signal.ice) {
+  } else if (signal.ice && iceState !== 'completed') {
     peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice)).catch(errorHandler);
   }
-}
-
-function gotIceCandidate(event) {
-  console.log('ice')
-  if (event.candidate != null) {
-    console.log('candidate')
-    serverConnection.emit('message', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }));
-  }
-}
-
-function createdDescription(description) {
-  console.log('got description');
-
-  peerConnection.setLocalDescription(description).then(function () {
-    peerConnection.localDescription.sdp = setMediaBitrates(peerConnection.localDescription.sdp);
-    serverConnection.emit('message', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }));
-  }).catch(errorHandler);
 }
 
 function gotRemoteStream(event) {
