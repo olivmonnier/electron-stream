@@ -1,4 +1,6 @@
 
+const io = require('socket.io-client');
+
 let serverConnection;
 let remoted = false;
 let peerConnection;
@@ -16,7 +18,7 @@ const peerConnectionConfig = {
   'iceServers': iceServers
 };
 
-pageReady();
+pageReady(); 
 
 window.onbeforeunload = function () {
   if (peerConnection) peerConnection.close();
@@ -27,8 +29,8 @@ function pageReady() {
   uuid = generateUuid(); 
   remoteVideo = document.getElementById('remoteVideo');
 
-  serverConnection = new WebSocket('wss://' + window.location.host);
-  serverConnection.onmessage = gotMessageFromServer;
+  serverConnection = io.connect(window.location.protocol + "//" + window.location.host); //new WebSocket('wss://' + window.location.host);new WebSocket('wss://' + window.location.host);
+  serverConnection.on('message', gotMessageFromServer);
 }
 
 function start() {
@@ -41,7 +43,7 @@ function gotMessageFromServer(message) {
   console.log('message', message)
   if (!peerConnection) start();
 
-  const signal = JSON.parse(message.data);
+  const signal = JSON.parse(message);
   const state = peerConnection.signalingState;
 
   // Ignore messages from ourself
@@ -64,7 +66,7 @@ function gotIceCandidate(event) {
   console.log('ice')
   if (event.candidate != null) {
     console.log('candidate')
-    serverConnection.send(JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }));
+    serverConnection.emit('message', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }));
   }
 }
 
@@ -73,7 +75,7 @@ function createdDescription(description) {
 
   peerConnection.setLocalDescription(description).then(function () {
     peerConnection.localDescription.sdp = setMediaBitrates(peerConnection.localDescription.sdp);
-    serverConnection.send(JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }));
+    serverConnection.emit('message', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }));
   }).catch(errorHandler);
 }
 

@@ -8,8 +8,6 @@ const app = express();
 const credentials = { key: privateKey, cert: certificate };
 const httpsServer = https.createServer(credentials, app);
 const HTTPS_PORT = 8443;
-const WebSocket = require('ws');
-const WebSocketServer = WebSocket.Server;
 const { BrowserWindow, ipcMain } = require('electron');
 const getMainWindowId = require('../main');
 
@@ -22,50 +20,22 @@ app.get('/', function (req, res) {
 
 httpsServer.listen(HTTPS_PORT);
 
-const wss = new WebSocketServer({ server: httpsServer });
+const io = require('socket.io')(httpsServer);
 
-wss.on('connection', function (ws) {
+io.on('connection', (socket) => {
   const currentWindow = BrowserWindow.fromId(getMainWindowId());
+
   currentWindow.webContents.send('connection', null);
 
-  ws.isAlive = true;
-  ws.on('pong', heartbeat);
-
-  ws.on('message', function (message) {
-    const currentWindow = BrowserWindow.fromId(getMainWindowId());
-    // Broadcast any received message to all clients
-    console.log('received: %s', message);
-    //wss.broadcast(message);
-    currentWindow.webContents.send('message', message)
+  socket.on('message', (data) => {
+    currentWindow.webContents.send('message', data)
   });
 
   ipcMain.on('iceCandidate', (event, message) => {
-    wss.broadcast(message);
+    socket.emit('message', message);
   });
 
   ipcMain.on('localDescription', (event, message) => {
-    wss.broadcast(message);
+    socket.emit('message', message);
   });
 });
- 
-wss.broadcast = function (data) {
-  this.clients.forEach(function (client) {
-    console.log(client)
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(data);
-    }
-  });
-}; 
-
-const interval = setInterval(function ping() {
-  wss.clients.forEach(function each(ws) {
-    if (ws.isAlive === false) return ws.terminate();
-
-    ws.isAlive = false;
-    ws.ping('', false, true);
-  });
-}, 30000);
-
-function heartbeat() {
-  this.isAlive = true;
-}
