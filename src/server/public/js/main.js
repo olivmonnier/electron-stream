@@ -29,7 +29,7 @@ function pageReady() {
   uuid = generateUuid(); 
   remoteVideo = document.getElementById('remoteVideo');
 
-  serverConnection = io.connect(window.location.protocol + "//" + window.location.host); //new WebSocket('wss://' + window.location.host);new WebSocket('wss://' + window.location.host);
+  serverConnection = io.connect(window.location.protocol + "//" + window.location.host);
   serverConnection.on('message', gotMessageFromServer);
 }
 

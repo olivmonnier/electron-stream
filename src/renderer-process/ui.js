@@ -38,23 +38,7 @@ function addVideoQuality(quality) {
   select.appendChild(option);
 }
 
-function changeSelect(pc, localStream) {
-  let source = document.querySelector('#sources').value;
-  const quality = document.querySelector('#videoQuality').value;
-
-  source = source.replace(/window|screen/g, (match) => match + ':');
-
-  getStream(source, quality).then((stream) => {
-    if (pc) {
-      pc.removeStream(localStream);
-      pc.addStream(stream);
-    }
-    gotStream(stream);
-  });
-}
-
 module.exports = {
   showSources,
-  showVideoQualities,
-  changeSelect
+  showVideoQualities
 }

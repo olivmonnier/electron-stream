@@ -15,7 +15,7 @@ gulp.task('babelify', () => {
     .pipe(gulp.dest('./src/server/public/js/'));
 });
 
-gulp.task('default', () => {
+gulp.task('default', ['babelify'], () => {
   processManager.start()
 
   // Restart browser process

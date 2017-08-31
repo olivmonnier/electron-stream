@@ -26,7 +26,18 @@ document.querySelector('#sources').addEventListener('change', onChangeSelect);
 document.querySelector('#videoQuality').addEventListener('change', onChangeSelect);
 
 function onChangeSelect() {
-  changeSelect(peerConnection, localStream);
+  let source = document.querySelector('#sources').value;
+  const quality = document.querySelector('#videoQuality').value;
+
+  source = source.replace(/window|screen/g, (match) => match + ':');
+
+  getStream(source, quality).then((stream) => {
+    if (peerConnection) {
+      peerConnection.removeStream(localStream);
+      peerConnection.addStream(stream);
+    }
+    gotStream(stream);
+  });
 }
 
 function pageReady() {
