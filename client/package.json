@@ -1,0 +1,21 @@
+{
+  "name": "webrtc-stream-desktop-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "gulp"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "devtron": "^1.4.0",
+    "electron": "^1.7.5",
+    "electron-connect": "^0.6.2",
+    "electron-packager": "^9.0.0",
+    "gulp": "^3.9.1",
+    "socket.io": "^2.0.3"
+  }
+}
