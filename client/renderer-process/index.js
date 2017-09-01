@@ -39,7 +39,7 @@ function onChangeSelect() {
 function pageReady() {
   uuid = generateUuid();
 
-  serverConnection = io.connect('https://localhost:5600/'); 
+  serverConnection = io.connect('https://enigmatic-forest-43484.herokuapp.com/'); 
 
   serverConnection.on('connect', () => console.log(serverConnection.id));
   serverConnection.on('newUser', start);
