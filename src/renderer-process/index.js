@@ -1,9 +1,10 @@
+const { ipcRenderer } = require('electron');
+
 let localStream;
 let remoteVideo;
 let peerConnection;
 let uuid;
 
-const { ipcRenderer } = require('electron');
 const { showSources, showVideoQualities, changeSelect } = require('./ui');
 const { getStream } = require('../utils/capture');
 const iceServers = require('../utils/iceServersAdress');
