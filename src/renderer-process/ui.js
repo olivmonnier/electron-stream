@@ -1,7 +1,11 @@
 const { getStream, getSources, videoQualities, formatScreenId } = require('../utils/capture');
 
-function showSources() {
+const $sources = document.querySelector('#sources');
+const $videoQuality = document.querySelector('#videoQuality');
+
+function showSources() { 
   getSources().then(sources => {
+    $sources.innerHTML = '';
     for (let source of sources) {
       addSource(source);
     }
@@ -17,7 +21,7 @@ function showVideoQualities() {
 function addSource(source) {
   let formatId;
   const { id, name } = source;
-  const select = document.querySelector('#sources');
+  const select = $sources;
   const option = document.createElement('option');
 
   formatId = formatScreenId(id, name);
@@ -29,7 +33,7 @@ function addSource(source) {
 }
 
 function addVideoQuality(quality) {
-  const select = document.querySelector('#videoQuality');
+  const select = $videoQuality;
   const option = document.createElement('option');
 
   option.value = quality;

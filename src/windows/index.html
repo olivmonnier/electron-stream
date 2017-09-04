@@ -2,6 +2,12 @@
   <head>
     <title>Electron Stream</title>
     <style>
+      html, body {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        height: 100%;
+      }
       body {
         background: white;
         display: -webkit-flex;
@@ -11,11 +17,17 @@
       }
       video {
         background: rgba(0, 0, 0, 0.25);
+        max-width: 100%;
       }
       select {
+        padding: 8px 12px;
         display: inline-block;
         outline: none;
         max-width: 200px;
+      }
+      input {
+        padding: 8px 12px;
+        width: 100%;
       }
     </style>
   </head>
@@ -25,6 +37,7 @@
       <select id="videoQuality"></select>
     </div>
     <video autoplay muted id="localVideo"></video>
+    <input type="text" id="connectionPath"/>
     <script>
       require('../renderer-process/index.js');
     </script>

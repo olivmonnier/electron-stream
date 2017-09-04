@@ -41,15 +41,21 @@ function pageReady() {
 
   serverConnection = io.connect('https://webrtc-stream-server.herokuapp.com/'); 
 
-  serverConnection.on('connect', () => console.log(serverConnection.id));
+  serverConnection.on('connect', onConnect);
   serverConnection.on('newUser', start);
   serverConnection.on('message', onMessageFromServer);
 
-  showSources();
+  showSources()
   showVideoQualities();
   getStream().then(gotStream);
 }
 
+function onConnect() {
+  const input = document.querySelector('#connectionPath');
+
+  input.value = 'https://webrtc-stream-server.herokuapp.com/?room=' + serverConnection.id;
+}
+ 
 function start() {
   console.log('start');
   peerConnection = new RTCPeerConnection(peerConnectionConfig);
