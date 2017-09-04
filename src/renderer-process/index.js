@@ -76,7 +76,7 @@ function onIceCandidate(event) {
   )
 }
 
-function onMessageFromServer(event, message) {
+function onMessageFromServer(message) {
   const signal = JSON.parse(message);
   const signalState = peerConnection.signalingState;
   const iceState = peerConnection.iceConnectionState;
