@@ -56,17 +56,23 @@ function start() {
   peerConnection.addStream(localStream);  
   peerConnection.onnegotiationneeded = onNegotiationnNeeded;
   peerConnection.onicecandidate = onIceCandidate;
+  peerConnection.onconnectionstatechange = function(event) {
+    console.log(event, peerConnection.connectionState)
+  }
+  peerConnection.oniceconnectionstatechange = function(event) {
+    console.log(event, peerConnection.iceConnectionState)
+  }
 }
 
 function onNegotiationnNeeded() {
   createOffer(peerConnection, () => {
-    serverConnection.emit('localDescription', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }))
+    serverConnection.emit('message', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }))
   })
 }
 
 function onIceCandidate(event) {
   iceCandidate(event, () => 
-    serverConnection.emit('iceCandidate', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
+    serverConnection.emit('message', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
   )
 }
 

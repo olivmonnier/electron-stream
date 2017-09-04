@@ -4,26 +4,21 @@ const processManager = require('electron-connect').server.create({
   logLevel: 1
 });
 
-gulp.task('move:js', () => {
-  return gulp.src(['../utils/**/*'])
-    .pipe(gulp.dest('./utils/'));
-});
-
-gulp.task('default', ['move:js'], () => {
+gulp.task('default', () => {
   processManager.start()
 
   // Restart browser process
   gulp.watch([
-    './main.js',
-    './main-process/**/*.js'
+    './src/main.js',
+    './src/main-process/**/*.js'
   ], () => {
     processManager.broadcast('close')
     processManager.restart()
   })
   // Reload renderer process
   gulp.watch([
-    './renderer-process/**/*.js',
-    './windows/**/*.html',
-    './**/*.{css,js}'
+    './src/renderer-process/**/*.js',
+    './src/windows/**/*.html',
+    './src/**/*.{css,js}'
   ], processManager.reload)
 });
