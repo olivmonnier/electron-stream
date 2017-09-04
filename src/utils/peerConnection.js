@@ -32,8 +32,8 @@ function iceCandidate(event, cb) {
   console.log('ice')
   if (event.candidate) {
     console.log('candidate');
-    cb()
   }
+  cb()
 }
 
 function errorHandler(error) {

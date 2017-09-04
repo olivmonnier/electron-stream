@@ -1,4 +1,4 @@
-const path = require('path');
+/*const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const https = require('https');
@@ -38,4 +38,4 @@ io.on('connection', (socket) => {
   ipcMain.on('localDescription', (event, message) => {
     socket.emit('message', message);
   });
-});
+});*/

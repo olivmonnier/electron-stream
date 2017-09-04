@@ -1,5 +1,7 @@
 const { ipcRenderer } = require('electron');
+const io = require('socket.io-client');
 
+let serverConnection;
 let localStream;
 let remoteVideo;
 let peerConnection;
@@ -15,9 +17,6 @@ const peerConnectionConfig = {
 };
 
 pageReady();
-
-ipcRenderer.on('connection', start);
-ipcRenderer.on('message', onMessageFromServer);
 
 document.querySelector('#sources').addEventListener('change', onChangeSelect);
 document.querySelector('#videoQuality').addEventListener('change', onChangeSelect);
@@ -40,6 +39,12 @@ function onChangeSelect() {
 function pageReady() {
   uuid = generateUuid();
 
+  serverConnection = io.connect('https://webrtc-stream-server.herokuapp.com/'); 
+
+  serverConnection.on('connect', () => console.log(serverConnection.id));
+  serverConnection.on('newUser', start);
+  serverConnection.on('message', onMessageFromServer);
+
   showSources();
   showVideoQualities();
   getStream().then(gotStream);
@@ -51,27 +56,27 @@ function start() {
   peerConnection.addStream(localStream);  
   peerConnection.onnegotiationneeded = onNegotiationnNeeded;
   peerConnection.onicecandidate = onIceCandidate;
-  peerConnection.onconnectionstatechange = function (event) {
+  peerConnection.onconnectionstatechange = function(event) {
     console.log(event, peerConnection.connectionState)
   }
-  peerConnection.oniceconnectionstatechange = function (event) {
+  peerConnection.oniceconnectionstatechange = function(event) {
     console.log(event, peerConnection.iceConnectionState)
   }
 }
 
 function onNegotiationnNeeded() {
   createOffer(peerConnection, () => {
-    ipcRenderer.send('localDescription', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }))
+    serverConnection.emit('message', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }))
   })
 }
 
 function onIceCandidate(event) {
   iceCandidate(event, () => 
-    ipcRenderer.send('iceCandidate', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
+    serverConnection.emit('message', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
   )
 }
 
-function onMessageFromServer(event, message) {
+function onMessageFromServer(message) {
   const signal = JSON.parse(message);
   const signalState = peerConnection.signalingState;
   const iceState = peerConnection.iceConnectionState;
