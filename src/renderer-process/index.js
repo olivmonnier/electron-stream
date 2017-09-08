@@ -1,20 +1,30 @@
-const { ipcRenderer } = require('electron');
 const io = require('socket.io-client');
-
-let serverConnection;
-let localStream;
-let remoteVideo;
-let peerConnection;
-let uuid;
-
+const SimpleWebRTC = require('simplewebrtc');
 const { showSources, showVideoQualities, changeSelect } = require('./ui');
-const { getStream } = require('../utils/capture');
-const iceServers = require('../utils/iceServersAdress');
-const generateUuid = require('../utils/uuid');
-const { createOffer, iceCandidate } = require('../utils/peerConnection');
-const peerConnectionConfig = {
-  'iceServers': iceServers
-};
+const { getSources, formatScreenId, videoQualities } = require('../utils/capture');
+
+let webrtc;
+let videoQuality = videoQualities['low'];
+let videoConfig = {
+  chromeMediaSource: 'desktop',
+  minWidth: videoQuality[0],
+  maxWidth: videoQuality[0],
+  minHeight: videoQuality[1],
+  maxHeight: videoQuality[1],
+  minFrameRate: 15,
+  maxFrameRate: 25
+}
+
+let mediaConfig = {
+  audio: {
+    mandatory: {
+      chromeMediaSource: 'desktop'
+    }
+  },
+  video: {
+    mandatory: videoConfig
+  }
+}
 
 pageReady();
 
@@ -22,93 +32,48 @@ document.querySelector('#sources').addEventListener('change', onChangeSelect);
 document.querySelector('#videoQuality').addEventListener('change', onChangeSelect);
 
 function onChangeSelect() {
-  let source = document.querySelector('#sources').value;
+  let sourceId = document.querySelector('#sources').value;
+  const sourceName = document.querySelector('#sources option:checked').textContent;
   const quality = document.querySelector('#videoQuality').value;
 
-  source = source.replace(/window|screen/g, (match) => match + ':');
+  sourceId = sourceId.replace(/window|screen/g, (match) => match + ':');
 
-  getStream(source, quality).then((stream) => {
-    if (peerConnection) {
-      peerConnection.removeStream(localStream);
-      peerConnection.addStream(stream);
-    }
-    gotStream(stream);
-  });
+  onChangeVideoSource(sourceId, sourceName, quality);
+}
+
+function onChangeVideoSource(sourceId, sourceName, quality) {
+  videoQuality = videoQualities[quality];
+
+  videoConfig['minWidth'] = videoQuality[0];
+  videoConfig['maxWidth'] = videoQuality[0];
+  videoConfig['minHeight'] = videoQuality[1];
+  videoConfig['maxHeight'] = videoQuality[1];
+  videoConfig['chromeMediaSourceId'] = formatScreenId(sourceId, sourceName);
+
+  webrtc.stopLocalVideo();
+
+  webrtc.config.media = mediaConfig;
+
+  webrtc.startLocalVideo();
 }
 
 function pageReady() {
-  uuid = generateUuid();
-
-  serverConnection = io.connect('https://webrtc-stream-server.herokuapp.com/'); 
-
-  serverConnection.on('connect', onConnect);
-  serverConnection.on('newUser', start);
-  serverConnection.on('message', onMessageFromServer);
-
   showSources()
   showVideoQualities();
-  getStream().then(gotStream);
-}
+  getSources().then(sources => {
+    webrtc = new SimpleWebRTC({
+      url: 'https://webrtc-stream-server.herokuapp.com/',
+      socketio: io,
+      localVideoEl: 'localVideo',
+      debug: true,
+      autoRequestMedia: true,
+      media: mediaConfig
+    });
+    webrtc.on('connectionReady', (sessionId) => {
+      const input = document.querySelector('#connectionPath');
 
-function onConnect() {
-  const input = document.querySelector('#connectionPath');
-
-  input.value = 'https://webrtc-stream-server.herokuapp.com/?room=' + serverConnection.id;
-}
- 
-function start() {
-  console.log('start');
-  peerConnection = new RTCPeerConnection(peerConnectionConfig);
-  peerConnection.addStream(localStream);  
-  peerConnection.onnegotiationneeded = onNegotiationnNeeded;
-  peerConnection.onicecandidate = onIceCandidate;
-  peerConnection.onconnectionstatechange = function(event) {
-    console.log(event, peerConnection.connectionState)
-  }
-  peerConnection.oniceconnectionstatechange = function(event) {
-    console.log(event, peerConnection.iceConnectionState)
-  }
-}
-
-function onNegotiationnNeeded() {
-  createOffer(peerConnection, () => {
-    serverConnection.emit('message', JSON.stringify({ 'sdp': peerConnection.localDescription, 'uuid': uuid }))
+      input.value = 'https://webrtc-stream-server.herokuapp.com/?room=' + sessionId;
+      webrtc.createRoom(sessionId);
+    });
   })
-}
-
-function onIceCandidate(event) {
-  iceCandidate(event, () => 
-    serverConnection.emit('message', JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
-  )
-}
-
-function onMessageFromServer(message) {
-  const signal = JSON.parse(message);
-  const signalState = peerConnection.signalingState;
-  const iceState = peerConnection.iceConnectionState;
-
-  if (signal.uuid == uuid) return;
-
-  if (signal.sdp) {
-    if (signal.sdp.type == 'answer') {
-      peerConnection.setRemoteDescription(signal.sdp).catch(errorHandler);
-    }
-  } else if (signal.ice && iceState !== 'completed') {
-    peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice)).catch(errorHandler);
-  }
-}
-
-function gotStream(stream) {
-  const video = document.querySelector('video');
-
-  if (localStream) {
-    localStream.getVideoTracks()[0].stop();
-    localStream = null;
-  }
-  localStream = stream;
-  video.src = URL.createObjectURL(stream);
-}
-
-function errorHandler(error) {
-  console.log(error);
-}
+} 
