@@ -25,7 +25,7 @@ let mediaConfig = {
     mandatory: videoConfig
   }
 }
-
+ 
 pageReady();
 
 document.querySelector('#sources').addEventListener('change', onChangeSelect);
@@ -42,6 +42,8 @@ function onChangeSelect() {
 }
 
 function onChangeVideoSource(sourceId, sourceName, quality) {
+  const peers = webrtc.getPeers();
+
   videoQuality = videoQualities[quality];
 
   videoConfig['minWidth'] = videoQuality[0];
@@ -49,6 +51,7 @@ function onChangeVideoSource(sourceId, sourceName, quality) {
   videoConfig['minHeight'] = videoQuality[1];
   videoConfig['maxHeight'] = videoQuality[1];
   videoConfig['chromeMediaSourceId'] = formatScreenId(sourceId, sourceName);
+
 
   webrtc.stopLocalVideo();
 
