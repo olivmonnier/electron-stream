@@ -6,6 +6,7 @@ const $videoQuality = document.querySelector('#videoQuality');
 function showSources() { 
   getSources().then(sources => {
     $sources.innerHTML = '';
+
     for (let source of sources) {
       addSource(source);
     }
@@ -20,7 +21,7 @@ function showVideoQualities() {
 
 function addSource(source) {
   let formatId;
-  const { id, name } = source;
+  const { id, name, thumbnail } = source;
   const select = $sources;
   const option = document.createElement('option');
 

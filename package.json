@@ -16,6 +16,7 @@
     "electron-connect": "^0.6.2",
     "electron-packager": "^9.0.0",
     "gulp": "^3.9.1",
+    "simplewebrtc": "^3.0.1",
     "socket.io": "^2.0.3"
   }
 }
