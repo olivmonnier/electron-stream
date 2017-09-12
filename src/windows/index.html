@@ -1,6 +1,7 @@
 <html>
   <head>
     <title>Electron Stream</title>
+    <link rel="stylesheet" href="../../semantic/dist/semantic.min.css">
     <style>
       html, body {
         padding: 0;
@@ -9,8 +10,11 @@
         height: 100%;
       }
       body {
-        background: white;
+        background: #ededed;
+      }
+      main {
         display: -webkit-flex;
+        height: 100%;
         -webkit-justify-content: center;
         -webkit-align-items: center;
         -webkit-flex-direction: column;
@@ -19,26 +23,35 @@
         background: rgba(0, 0, 0, 0.25);
         max-width: 100%;
         transform: scaleX(1) !important; 
-      }
-      select {
-        padding: 8px 12px;
-        display: inline-block;
-        outline: none;
-        max-width: 200px;
-      }
-      input {
-        padding: 8px 12px;
-        width: 100%;
-      }
+      }      
     </style>
   </head>
   <body>
-    <div>
-      <select id="sources"></select>
-      <select id="videoQuality"></select>
-    </div>
-    <video autoplay muted id="localVideo"></video>
-    <input type="text" id="connectionPath"/>
+    <nav class="ui top fixed tiny menu">
+      <div class="item">
+        <select id="sources" class="ui dropdown"></select>
+      </div>
+      <div class="item">
+        <select id="videoQuality" class="ui dropdown"></select>
+      </div>
+      <div class="item right">
+        <div class="ui action input">
+          <input type="text" id="connectionPath" />
+          <button class="ui teal right labeled icon button" id="copyAdress">
+            <i class="copy icon"></i>
+            Copy
+          </button>
+        </div>
+      </div>
+    </nav>
+    <main>
+      <video autoplay muted id="localVideo"></video>
+    </main>
+    
+    <script>
+      window.$ = window.jQuery = require('jquery');
+    </script>
+    <script src="../../semantic/dist/semantic.min.js"></script>
     <script>
       require('../renderer-process/index.js');
     </script>

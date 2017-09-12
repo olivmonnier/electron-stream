@@ -25,11 +25,21 @@ let mediaConfig = {
     mandatory: videoConfig
   }
 }
- 
+
 pageReady();
 
+document.querySelector('#copyAdress').addEventListener('click', onClickCopy);
 document.querySelector('#sources').addEventListener('change', onChangeSelect);
 document.querySelector('#videoQuality').addEventListener('change', onChangeSelect);
+
+$('.ui.dropdown').dropdown();
+
+function onClickCopy() {
+  const input = document.querySelector('#connectionPath');
+  
+  input.select();
+  document.execCommand('copy');
+}
 
 function onChangeSelect() {
   let sourceId = document.querySelector('#sources').value;
@@ -52,7 +62,6 @@ function onChangeVideoSource(sourceId, sourceName, quality) {
   videoConfig['maxHeight'] = videoQuality[1];
   videoConfig['chromeMediaSourceId'] = formatScreenId(sourceId, sourceName);
 
-
   webrtc.stopLocalVideo();
 
   webrtc.config.media = mediaConfig;
@@ -69,6 +78,7 @@ function pageReady() {
       socketio: io,
       localVideoEl: 'localVideo',
       debug: true,
+      autoRemoveVideos: true,
       autoRequestMedia: true,
       media: mediaConfig
     });
