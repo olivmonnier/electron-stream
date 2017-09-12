@@ -3,6 +3,7 @@ const SimpleWebRTC = require('simplewebrtc');
 const { showSources, showVideoQualities, changeSelect } = require('./ui');
 const { getSources, formatScreenId, videoQualities } = require('../utils/capture');
 
+let isWin = /^win/.test(process.platform);
 let webrtc;
 let videoQuality = videoQualities['low'];
 let videoConfig = {
@@ -14,13 +15,9 @@ let videoConfig = {
   minFrameRate: 15,
   maxFrameRate: 25
 }
-
+let audioConfig = isWin ? { mandatory: { chromeMediaSource: 'desktop' } } : true;
 let mediaConfig = {
-  audio: {
-    mandatory: {
-      chromeMediaSource: 'desktop'
-    }
-  },
+  audio: audioConfig,
   video: {
     mandatory: videoConfig
   }
