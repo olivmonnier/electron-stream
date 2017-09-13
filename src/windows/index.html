@@ -42,21 +42,23 @@
         <div class="menu"></div>
       </div>
     </nav>
-    <main class="ui video">
-      <div class="ui dimmer">
-        <div class="content">
-          <div class="center">
-            <div class="ui action input">
-              <input type="text" id="connectionPath" />
-              <button class="ui teal right labeled icon button" id="copyAdress">
-                  <i class="copy icon"></i>
-                  Copy
-                </button>
+    <main>
+      <div class="ui video">
+        <div class="ui dimmer">
+          <div class="content">
+            <div class="center">
+              <div class="ui action input">
+                <input type="text" id="connectionPath" />
+                <button class="ui teal right labeled icon button" id="copyAdress">
+                    <i class="copy icon"></i>
+                    Copy
+                  </button>
+              </div>
             </div>
           </div>
         </div>
+        <video autoplay muted id="localVideo"></video>
       </div>
-      <video autoplay muted id="localVideo"></video>
     </main>
     
     <script>
