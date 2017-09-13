@@ -62,6 +62,9 @@
     </main>
     
     <script>
+      require('electron-connect').client.create()
+    </script>
+    <script>
       window.$ = window.jQuery = require('jquery');
     </script>
     <script src="../../semantic/dist/semantic.min.js"></script>
@@ -69,4 +72,4 @@
       require('../renderer-process/index.js');
     </script>
   </body>
-</html> 
+</html>
