@@ -8,9 +8,13 @@
         margin: 0;
         width: 100%;
         height: 100%;
+        min-width: 800px;
       }
       body {
-        background: #ededed;
+        background: #010101;
+      }
+      nav.ui.menu {
+        margin: 0;
       }
       main {
         display: -webkit-flex;
@@ -21,30 +25,37 @@
       }
       video {
         background: rgba(0, 0, 0, 0.25);
-        max-width: 100%;
+        max-width: 800px;
         transform: scaleX(1) !important; 
       }      
     </style>
   </head>
   <body>
-    <nav class="ui top fixed tiny menu">
-      <div class="item">
-        <select id="sources" class="ui dropdown"></select>
+    <nav class="ui top mini inverted menu">
+      <div id="sources" class="ui dropdown item">
+        <span class="text">Source</span>
+        <i class="dropdown icon"></i>
       </div>
-      <div class="item">
-        <select id="videoQuality" class="ui dropdown"></select>
-      </div>
-      <div class="item right">
-        <div class="ui action input">
-          <input type="text" id="connectionPath" />
-          <button class="ui teal right labeled icon button" id="copyAdress">
-            <i class="copy icon"></i>
-            Copy
-          </button>
-        </div>
+      <div id="qualities" class="ui dropdown item">
+        <span class="text">Quality</span>
+        <i class="dropdown icon"></i>
+        <div class="menu"></div>
       </div>
     </nav>
-    <main>
+    <main class="ui video">
+      <div class="ui dimmer">
+        <div class="content">
+          <div class="center">
+            <div class="ui action input">
+              <input type="text" id="connectionPath" />
+              <button class="ui teal right labeled icon button" id="copyAdress">
+                  <i class="copy icon"></i>
+                  Copy
+                </button>
+            </div>
+          </div>
+        </div>
+      </div>
       <video autoplay muted id="localVideo"></video>
     </main>
     
@@ -56,4 +67,4 @@
       require('../renderer-process/index.js');
     </script>
   </body>
-</html>
+</html> 

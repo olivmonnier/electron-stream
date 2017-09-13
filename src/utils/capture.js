@@ -17,35 +17,8 @@ const getSources = (types = ['window', 'screen']) => {
   });
 }
 
-const getStream = (sourceId = null, quality = "low") => {
-  const videoQuality = videoQualities[quality];
-
-  let videoOptions = {
-    chromeMediaSource: 'desktop',
-    minWidth: videoQuality[0],
-    maxWidth: videoQuality[0],
-    minHeight: videoQuality[1],
-    maxHeight: videoQuality[1],
-    minFrameRate: 15,
-    maxFrameRate: 25
-  }
-
-  if (sourceId !== null) videoOptions['chromeMediaSourceId'] = sourceId;
-
-  return navigator.mediaDevices.getUserMedia({
-    audio: {
-      mandatory: {
-        chromeMediaSource: 'desktop'
-      }
-    },
-    video: {
-      mandatory: videoOptions
-    }
-  })
-}
-
 const formatScreenId = (id, name) => {
-  if (name.indexOf('Screen ') > -1) {
+  if (name && name.indexOf('Screen ') > -1) {
     nScreen = parseInt(name.replace('Screen ', ''), 10) - 1;
 
     return 'screen:' + nScreen + ':0';
@@ -57,6 +30,5 @@ const formatScreenId = (id, name) => {
 module.exports = {
   videoQualities,
   getSources,
-  getStream,
   formatScreenId
 }

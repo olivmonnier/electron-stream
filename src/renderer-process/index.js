@@ -1,6 +1,5 @@
 const io = require('socket.io-client');
 const SimpleWebRTC = require('simplewebrtc');
-const { showSources, showVideoQualities, changeSelect } = require('./ui');
 const { getSources, formatScreenId, videoQualities } = require('../utils/capture');
 
 let isWin = /^win/.test(process.platform);
@@ -25,65 +24,87 @@ let mediaConfig = {
 
 pageReady();
 
-document.querySelector('#copyAdress').addEventListener('click', onClickCopy);
-document.querySelector('#sources').addEventListener('change', onChangeSelect);
-document.querySelector('#videoQuality').addEventListener('change', onChangeSelect);
-
-$('.ui.dropdown').dropdown();
-
-function onClickCopy() {
+function handledClickCopy() {
   const input = document.querySelector('#connectionPath');
   
   input.select();
   document.execCommand('copy');
+} 
+ 
+function handledChangeSource(val, text) {
+  let sourceId = val;
+  const sourceName = text;
+  const quality = $('#qualities').dropdown('get value');
+
+  changeSettings(sourceId, sourceName, quality);
 }
 
-function onChangeSelect() {
-  let sourceId = document.querySelector('#sources').value;
-  const sourceName = document.querySelector('#sources option:checked').textContent;
-  const quality = document.querySelector('#videoQuality').value;
+function handledChangeQuality(val) {
+  let sourceId = $('#sources').dropdown('get value');
+  const sourceName = $('#sources').dropdown('get text');
+  const quality = val;
 
-  sourceId = sourceId.replace(/window|screen/g, (match) => match + ':');
-
-  onChangeVideoSource(sourceId, sourceName, quality);
+  changeSettings(sourceId, sourceName, quality);
 }
 
-function onChangeVideoSource(sourceId, sourceName, quality) {
-  const peers = webrtc.getPeers();
+function changeSettings(sourceId, sourceName, quality) {
+  if (sourceId && sourceName && quality) {
+    const formatSourceId = sourceId.replace(/window|screen/g, (match) => match + ':');
 
-  videoQuality = videoQualities[quality];
+    videoQuality = videoQualities[quality];
 
-  videoConfig['minWidth'] = videoQuality[0];
-  videoConfig['maxWidth'] = videoQuality[0];
-  videoConfig['minHeight'] = videoQuality[1];
-  videoConfig['maxHeight'] = videoQuality[1];
-  videoConfig['chromeMediaSourceId'] = formatScreenId(sourceId, sourceName);
+    videoConfig['minWidth'] = videoQuality[0];
+    videoConfig['maxWidth'] = videoQuality[0];
+    videoConfig['minHeight'] = videoQuality[1];
+    videoConfig['maxHeight'] = videoQuality[1];
+    videoConfig['chromeMediaSourceId'] = formatScreenId(formatSourceId, sourceName);
 
-  webrtc.stopLocalVideo();
+    webrtc.stopLocalVideo();
 
-  webrtc.config.media = mediaConfig;
+    webrtc.config.media = mediaConfig;
 
-  webrtc.startLocalVideo();
+    webrtc.startLocalVideo();
+  } 
+} 
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
 function pageReady() {
-  showSources()
-  showVideoQualities();
-  getSources().then(sources => {
-    webrtc = new SimpleWebRTC({
-      url: 'https://webrtc-stream-server.herokuapp.com/',
-      socketio: io,
-      localVideoEl: 'localVideo',
-      debug: true,
-      autoRemoveVideos: true,
-      autoRequestMedia: true,
-      media: mediaConfig
-    });
-    webrtc.on('connectionReady', (sessionId) => {
-      const input = document.querySelector('#connectionPath');
+  webrtc = new SimpleWebRTC({
+    url: 'https://webrtc-stream-server.herokuapp.com/',
+    socketio: io,
+    localVideoEl: 'localVideo',
+    debug: true,
+    autoRemoveVideos: true,
+    autoRequestMedia: true,
+    media: mediaConfig
+  });
+  webrtc.on('connectionReady', (sessionId) => {
+    const input = document.querySelector('#connectionPath');
 
-      input.value = 'https://webrtc-stream-server.herokuapp.com/?room=' + sessionId;
-      webrtc.createRoom(sessionId);
-    });
+    input.value = 'https://webrtc-stream-server.herokuapp.com/?room=' + sessionId;
+    webrtc.createRoom(sessionId);
+  });
+
+  getSources().then(sources => {
+    $('#sources.dropdown').dropdown({
+      values: sources.map((source, i) => {
+        const { id, name } = source;
+        const sourceId = formatScreenId(id, name);
+
+        return { name, value: sourceId.replace(':', ''), selected: (i == 0) }
+      }),
+      onChange: handledChangeSource
+    })
+  });
+  $('#qualities.dropdown').dropdown({
+    values: Object.keys(videoQualities).map((quality, i) => {
+      return { name: capitalize(quality), value: quality, selected: (i == 0) }
+    }),
+    onChange: handledChangeQuality
   })
-} 
+  $('.video').dimmer({ on: 'hover' });
+  $('#copyAdress').on('click', handledClickCopy);
+}
